@@ -87,7 +87,18 @@ function getYouTubeId(url: string): string | null {
 }
 
 // Helper: Try to scrape YouTube transcript of first 30 seconds
-async function fetchYouTubeTranscript(videoId: string): Promise<{ text: string; source: "youtube" | "AI fallback" }> {
+function parseTimeString(timeStr: string): number {
+  if (!timeStr) return 0;
+  const parts = timeStr.split(":").map(Number);
+  if (parts.length === 2) {
+    return parts[0] * 60 + parts[1];
+  } else if (parts.length === 3) {
+    return parts[0] * 3600 + parts[1] * 60 + parts[2];
+  }
+  return parseFloat(timeStr) || 0;
+}
+
+async function fetchYouTubeTranscript(videoId: string, startTimeInSeconds: number): Promise<{ text: string; source: "youtube" | "AI fallback" }> {
   try {
     const watchUrl = `https://www.youtube.com/watch?v=${videoId}`;
     const response = await fetch(watchUrl, {
@@ -325,7 +336,7 @@ async function fetchYouTubeTranscript(videoId: string): Promise<{ text: string; 
                 firstFewCues.push(text);
                 count++;
               }
-              if (start <= 30) {
+              if (start >= startTimeInSeconds && start <= startTimeInSeconds + 30) {
                 compiledText += text + " ";
               }
             }
@@ -401,7 +412,7 @@ async function fetchYouTubeTranscript(videoId: string): Promise<{ text: string; 
           count++;
         }
 
-        if (start <= 30) {
+        if (start >= startTimeInSeconds && start <= startTimeInSeconds + 30) {
           compiledText += content + " ";
         }
       }
@@ -431,7 +442,9 @@ async function fetchYouTubeTranscript(videoId: string): Promise<{ text: string; 
 
 // Route 1: Process URL, extract/generate, translate, and markup
 app.post("/api/process-video", async (req, res) => {
-  const { videoUrl, language } = req.body;
+  const { videoUrl, language, startTime } = req.body;
+  
+  const startTimeInSeconds = parseTimeString(startTime);
   
   if (!videoUrl) {
     return res.status(400).json({ error: "YouTube video URL is required." });
@@ -448,7 +461,7 @@ app.post("/api/process-video", async (req, res) => {
     const ai = getGeminiClient();
 
     // Try to scrape
-    const scrapedResult = await fetchYouTubeTranscript(videoId);
+    const scrapedResult = await fetchYouTubeTranscript(videoId, startTimeInSeconds);
     let originalTranscript = scrapedResult.text;
     const isScraped = scrapedResult.source === "youtube";
 
@@ -468,8 +481,8 @@ app.post("/api/process-video", async (req, res) => {
     // If scraping failed, or to guarantee rich workout transcript, we generate context
     if (!originalTranscript) {
       // Use Search Grounding to find details about the video if possible, or build an elite high energy transcript based on title
-      const prompt = `Based on the workout video title/context: "${videoTitle}", generate an extremely energetic, high-intensity, motivational 30-second fitness coach transcript in English.
-Include high-energy trainer comments, fast pacing, gasping for breath, shouting encouragement, and workout cues (e.g. "Come on! High knees!", "Bring that heart rate up!"). Do NOT include any markdown speaker formatting or metadata tags in this output, just the continuous raw English text spoken by the trainer in the first 30 seconds of the workout.`;
+      const prompt = `Based on the workout video title/context: "${videoTitle}", generate an extremely energetic, high-intensity, motivational 30-second fitness coach transcript in English, assuming we are at ${startTime || "0:00"} in the video.
+Include high-energy trainer comments, fast pacing, gasping for breath, shouting encouragement, and workout cues (e.g. "Come on! High knees!", "Bring that heart rate up!"). Do NOT include any markdown speaker formatting or metadata tags in this output, just the continuous raw English text spoken by the trainer in that 30-second segment of the workout.`;
 
       const fallbackResponse = await ai.models.generateContent({
         model: "gemini-3.5-flash",
@@ -609,6 +622,47 @@ app.post("/api/generate-tts", async (req, res) => {
   } catch (error: any) {
     console.error("TTS generation error:", error);
     res.status(500).json({ error: error.message || "An error occurred during TTS audio generation." });
+  }
+});
+
+app.post("/api/save-settings", async (req, res) => {
+  const { apiKey } = req.body;
+  if (!apiKey) {
+    return res.status(400).json({ error: "API key is required." });
+  }
+  try {
+    const fs = await import("fs/promises");
+    const path = await import("path");
+    const envPath = path.join(process.cwd(), ".env");
+    
+    let envContent = "";
+    try {
+      envContent = await fs.readFile(envPath, "utf-8");
+    } catch (e) {
+      // File might not exist
+    }
+    
+    const lines = envContent.split("\n");
+    let updated = false;
+    const newLines = lines.map(line => {
+      if (line.startsWith("GEMINI_API_KEY=")) {
+        updated = true;
+        return `GEMINI_API_KEY="${apiKey}"`;
+      }
+      return line;
+    });
+    
+    if (!updated) {
+      newLines.push(`GEMINI_API_KEY="${apiKey}"`);
+    }
+    
+    await fs.writeFile(envPath, newLines.join("\n"));
+    process.env.GEMINI_API_KEY = apiKey;
+    
+    res.json({ success: true });
+  } catch (error: any) {
+    console.error("Error saving settings:", error);
+    res.status(500).json({ error: error.message || "Failed to save settings." });
   }
 });
 

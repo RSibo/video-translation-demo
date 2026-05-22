@@ -25,22 +25,10 @@ import { PresetVideo, TargetLanguage } from "./types";
 
 const PRESET_VIDEOS: PresetVideo[] = [
   {
-    title: "10 Min HIIT Cardio Workout (High Energy)",
-    url: "https://www.youtube.com/watch?v=MCo7947M_q0",
-    instructor: "Joe Wicks (Body Coach)",
-    type: "Cardio & HIIT"
-  },
-  {
-    title: "Tae Bo Ultimate Cardio Burn Exercise",
-    url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ", // Standard URL format, will fetch/render perfectly
-    instructor: "Billy Blanks",
-    type: "Kickboxing Martial Arts"
-  },
-  {
-    title: "Peloton 20 Min Hype Jump Start Workout",
-    url: "https://www.youtube.com/watch?v=pAnTby6FjV4",
-    instructor: "Robin Arzón",
-    type: "Hype Sprint"
+    title: "Peleton w/ Alina",
+    url: "https://youtu.be/8DkEih5law8?si=rgP3pu70dxnKZXep&t=338",
+    instructor: "Alina",
+    type: "Peloton"
   }
 ];
 
@@ -152,6 +140,27 @@ export default function App() {
   // Input states
   const [videoUrl, setVideoUrl] = useState<string>(PRESET_VIDEOS[0].url);
   const [targetLang, setTargetLang] = useState<TargetLanguage>("Spanish (Latin American)");
+  const [startTime, setStartTime] = useState<string>("5:05");
+  const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
+  const [apiKeyInput, setApiKeyInput] = useState<string>("");
+
+  const handleSaveSettings = async () => {
+    try {
+      const response = await fetch("/api/save-settings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ apiKey: apiKeyInput }),
+      });
+      if (!response.ok) {
+        throw new Error(`Failed to save settings (${response.status})`);
+      }
+      alert("Settings saved successfully!");
+      setIsSettingsOpen(false);
+    } catch (e: any) {
+      console.error(e);
+      alert(e.message || "Failed to save settings.");
+    }
+  };
   const [targetVoice, setTargetVoice] = useState<string>("Kore");
 
   // API loading states
@@ -293,7 +302,7 @@ export default function App() {
       const response = await fetch("/api/process-video", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ videoUrl, language: targetLang }),
+        body: JSON.stringify({ videoUrl, language: targetLang, startTime }),
       });
 
       clearInterval(stepInterval);
@@ -652,6 +661,14 @@ export default function App() {
             </div>
 
             <button 
+              onClick={() => setIsSettingsOpen(true)}
+              className="bg-[#334155] text-white px-3 py-2.5 rounded-full font-black text-xs uppercase shadow-xl hover:scale-105 transition-transform cursor-pointer flex items-center gap-1"
+            >
+              <Sliders className="w-4 h-4" />
+              <span>Settings</span>
+            </button>
+
+            <button 
               id="analyze-clip-header-btn"
               onClick={handleProcessVideo}
               disabled={isProcessingVideo || !videoUrl}
@@ -678,9 +695,15 @@ export default function App() {
                   value={videoUrl}
                   onChange={(e) => setVideoUrl(e.target.value)}
                 />
-                <div className="flex items-center gap-2 px-3 py-1 bg-[#334155] rounded-xl border border-white/10 shrink-0 select-none">
-                  <span className="text-[9px] font-bold uppercase text-slate-400">Segment Span</span>
-                  <span className="text-[#FF4D00] font-mono font-bold text-xs">00:00 - 00:30</span>
+                <div className="flex items-center gap-2 px-3 py-1 bg-[#334155] rounded-xl border border-white/10 shrink-0">
+                  <span className="text-[9px] font-bold uppercase text-slate-400">Start Time</span>
+                  <input
+                    type="text"
+                    className="bg-transparent border-none text-[#FF4D00] font-mono font-bold text-xs w-16 focus:outline-none"
+                    value={startTime}
+                    onChange={(e) => setStartTime(e.target.value)}
+                    placeholder="0:00"
+                  />
                 </div>
               </div>
             </div>
@@ -1190,6 +1213,50 @@ export default function App() {
             </button>
           </div>
         </footer>
+
+        {/* Settings Modal */}
+        {isSettingsOpen && (
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+            <div className="bg-[#1E293B] border border-white/10 rounded-2xl p-6 w-full max-w-md shadow-2xl">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-lg font-black uppercase tracking-wider text-[#FF4D00]">Settings</h2>
+                <button 
+                  onClick={() => setIsSettingsOpen(false)}
+                  className="text-slate-400 hover:text-white cursor-pointer"
+                >
+                  <Square className="w-5 h-5" />
+                </button>
+              </div>
+              <div className="space-y-4">
+                <div>
+                  <label className="text-xs font-bold uppercase text-slate-400 block mb-1">Gemini API Key</label>
+                  <input
+                    type="password"
+                    className="w-full bg-[#334155] border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:border-[#FF4D00] outline-none"
+                    placeholder="Enter your API key..."
+                    value={apiKeyInput}
+                    onChange={(e) => setApiKeyInput(e.target.value)}
+                  />
+                  <p className="text-[10px] text-slate-500 mt-1">This key will be saved to the server's .env file.</p>
+                </div>
+                <div className="flex justify-end gap-3 mt-6">
+                  <button
+                    onClick={() => setIsSettingsOpen(false)}
+                    className="px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-xl font-bold text-xs uppercase text-white cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleSaveSettings}
+                    className="px-4 py-2 bg-[#FF4D00] hover:bg-orange-500 rounded-xl font-bold text-xs uppercase text-white cursor-pointer"
+                  >
+                    Save
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Global Footer info */}
         <footer className="mt-8 border-t border-white/5 pt-4 text-center text-slate-500 text-[11px]" id="app-footer-info">
