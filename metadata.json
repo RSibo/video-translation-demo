@@ -1,0 +1,6 @@
+{
+  "name": "YouTube Workout Voice Translator",
+  "description": "Translates and dubs 30 seconds of high-energy YouTube workout videos with expressive voice tags and Director's Notes for ultra-excited audio output.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
