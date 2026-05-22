@@ -581,6 +581,8 @@ Provide your output strictly in JSON format matching the schema:
 app.post("/api/generate-tts", async (req, res) => {
   const { text, voice, language } = req.body;
 
+  console.log(`[TTS] Generating for text: "${text.substring(0, 50)}..."`);
+
   if (!text) {
     return res.status(400).json({ error: "Text is required to generate speech." });
   }

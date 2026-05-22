@@ -316,7 +316,7 @@ export default function App() {
       setProcessedResult(data);
       setEnglishEditorText(data.originalEnglish || "");
       setBaselineEditorText(data.baselineTranslation || "");
-      setPlainEditorText(data.plainTranslation || "");
+      setPlainEditorText("");
       setExpressiveEditorText(data.expressiveTranslation || "");
     } catch (e: any) {
       clearInterval(stepInterval);
@@ -1034,73 +1034,12 @@ export default function App() {
                     </div>
                   </div>
 
-                  {/* Column 3: Plain literal translation */}
-                  <div className="flex flex-col gap-3">
-                    <div className="flex items-center gap-2">
-                      <span className="bg-blue-500 w-3 h-3 rounded-full"></span>
-                      <h2 className="text-xs font-black uppercase tracking-widest text-[#3B82F6]">
-                        3) Latest Out of Box (Gemini 3.1)
-                      </h2>
-                    </div>
-
-                    <div className="flex-1 bg-white/5 rounded-3xl p-5 border border-white/10 flex flex-col justify-between min-h-[360px]">
-                      <div>
-                        <div className="flex items-center justify-between text-[10px] text-slate-300 mb-1">
-                          <span className="uppercase tracking-wider font-bold">Inject Voice Tag:</span>
-                        </div>
-                        <div className="flex flex-wrap gap-1 mb-2">
-                          {["[excited]", "[shouting]", "[gasp]", "[very fast]", "[laughs]", "[serious]"].map((tag, i) => (
-                            <button
-                              key={i}
-                              type="button"
-                              onClick={() => insertVoiceTag(tag, 'plain')}
-                              className="text-[9px] font-mono bg-[#1E293B] text-blue-200 hover:text-white hover:bg-blue-500 border border-white/5 rounded px-1.5 py-0.5 transition cursor-pointer"
-                            >
-                              {tag}
-                            </button>
-                          ))}
-                        </div>
-
-                        <textarea
-                          className="w-full bg-[#1E293B]/40 focus:bg-[#1E293B]/90 border border-white/10 focus:border-blue-500 rounded-xl p-3.5 text-xs text-slate-300 font-medium leading-relaxed min-h-[140px] focus:outline-none resize-none"
-                          value={plainEditorText}
-                          onChange={(e) => {
-                            setPlainEditorText(e.target.value);
-                            setPlainAudioUrl(null);
-                          }}
-                        />
-                      </div>
-
-                      <div className="mt-4 pt-3 border-t border-white/5 flex flex-col gap-2">
-                        <span className="text-[10px] text-slate-400 block text-right font-mono">Standard Out of Box Delivery</span>
-                        <button
-                          onClick={() => handleGenerateAndPlayTTS('plain')}
-                          disabled={loadingPlainAudio || !plainEditorText}
-                          className={`w-full py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 font-bold uppercase tracking-wider text-xs border transition-colors cursor-pointer ${
-                            playingPlain 
-                              ? "bg-slate-950 border-white/30 text-white" 
-                              : "bg-white/5 border-white/10 hover:bg-white/10 text-slate-200"
-                          }`}
-                        >
-                          {loadingPlainAudio ? (
-                            <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                          ) : playingPlain ? (
-                            <Pause className="w-4 h-4 text-blue-400" />
-                          ) : (
-                            <Play className="w-4 h-4" />
-                          )}
-                          <span>{playingPlain ? "Pause Out of Box" : "Play Latest Out of Box"}</span>
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Column 4: Expressive emotional translation with glowing Vibrant Theme and animated pulse dots */}
+                  {/* Column 3: Emotional Markup (moved from 4) */}
                   <div className="flex flex-col gap-3">
                     <div className="flex items-center gap-2">
                       <span className="bg-[#FF4D00] w-3 h-3 rounded-full animate-pulse"></span>
                       <h2 className="text-xs font-black uppercase tracking-widest text-[#FF4D00]">
-                        4) Emotional Markup
+                        3) Emotional Markup
                       </h2>
                     </div>
 
@@ -1156,63 +1095,75 @@ export default function App() {
                     </div>
                   </div>
 
+                  {/* Column 4: Free Text (was Column 3) */}
+                  <div className="flex flex-col gap-3">
+                    <div className="flex items-center gap-2">
+                      <span className="bg-green-500 w-3 h-3 rounded-full"></span>
+                      <h2 className="text-xs font-black uppercase tracking-widest text-[#10B981]">
+                        4) Free Text
+                      </h2>
+                    </div>
+
+                    <div className="flex-1 bg-white/5 rounded-3xl p-5 border border-white/10 flex flex-col justify-between min-h-[360px]">
+                      <div>
+                        <div className="flex items-center justify-between text-[10px] text-slate-300 mb-1">
+                          <span className="uppercase tracking-wider font-bold">Inject Voice Tag:</span>
+                        </div>
+                        <div className="flex flex-wrap gap-1 mb-2">
+                          {["[excited]", "[shouting]", "[gasp]", "[very fast]", "[laughs]", "[serious]", "[short pause]", "[long pause]", "[pause=1.0]"].map((tag, i) => (
+                            <button
+                              key={i}
+                              type="button"
+                              onClick={() => insertVoiceTag(tag, 'plain')}
+                              className="text-[9px] font-mono bg-[#1E293B] text-green-200 hover:text-white hover:bg-green-500 border border-white/5 rounded px-1.5 py-0.5 transition cursor-pointer"
+                            >
+                              {tag}
+                            </button>
+                          ))}
+                        </div>
+
+                        <textarea
+                          className="w-full bg-[#1E293B]/40 focus:bg-[#1E293B]/90 border border-white/10 focus:border-green-500 rounded-xl p-3.5 text-xs text-slate-300 font-medium leading-relaxed min-h-[140px] focus:outline-none resize-none"
+                          value={plainEditorText}
+                          onChange={(e) => {
+                            setPlainEditorText(e.target.value);
+                            setPlainAudioUrl(null);
+                          }}
+                          placeholder="Type anything here and play around with tags..."
+                        />
+                      </div>
+
+                      <div className="mt-4 pt-3 border-t border-white/5 flex flex-col gap-2">
+                        <span className="text-[10px] text-slate-400 block text-right font-mono">Free text area for testing</span>
+                        <button
+                          onClick={() => handleGenerateAndPlayTTS('plain')}
+                          disabled={loadingPlainAudio || !plainEditorText}
+                          className={`w-full py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 font-bold uppercase tracking-wider text-xs border transition-colors cursor-pointer ${
+                            playingPlain 
+                              ? "bg-slate-950 border-white/30 text-white" 
+                              : "bg-white/5 border-white/10 hover:bg-white/10 text-slate-200"
+                          }`}
+                        >
+                          {loadingPlainAudio ? (
+                            <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                          ) : playingPlain ? (
+                            <Pause className="w-4 h-4 text-green-400" />
+                          ) : (
+                            <Play className="w-4 h-4" />
+                          )}
+                          <span>{playingPlain ? "Pause Free Text" : "Play Free Text"}</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
                 </div>
               </div>
             )}
           </div>
         </main>
 
-        {/* Bottom Banner Section of Vibrant Palette Theme: Audio Profile, Director Notes, Mic Wave Icon panel */}
-        <footer className="bg-[#111827] border-t-4 border-[#FF4D00] rounded-3xl p-6 grid grid-cols-1 md:grid-cols-12 gap-6 mt-8 shadow-2xl">
-          <div className="md:col-span-4 space-y-2">
-            <h3 className="text-xs font-black uppercase tracking-[0.2em] text-[#FF4D00]">Audio Profile Metadata</h3>
-            <div className="bg-[#1E293B] p-4 rounded-xl border border-white/5 space-y-2.5">
-              <div className="flex justify-between items-center text-xs">
-                <span className="text-[9px] text-gray-400 font-bold uppercase">Persona Role</span>
-                <span className="font-bold text-white text-xs">{targetVoice}, Elite Cardio Coach</span>
-              </div>
-              <div className="flex justify-between items-center text-xs">
-                <span className="text-[9px] text-gray-400 font-bold uppercase">Translation Accent</span>
-                <span className="font-bold text-white text-xs">Gym Environment Accent</span>
-              </div>
-              <div className="flex justify-between items-center text-xs">
-                <span className="text-[9px] text-gray-400 font-bold uppercase">Target Speech Gait</span>
-                <span className="font-bold text-white text-xs">High-Intensity interval pacing</span>
-              </div>
-            </div>
-          </div>
 
-          <div className="md:col-span-5 space-y-2">
-            <h3 className="text-xs font-black uppercase tracking-[0.2em] text-[#FF4D00]">Director's Notes Guidance</h3>
-            <div className="bg-[#1E293B] p-4 rounded-xl border border-white/5 min-h-[105px] flex flex-col justify-between">
-              <p className="text-xs text-gray-300 italic">
-                "Infectious high-action gym enthusiasm. Starts explosive and energetic; includes minor gasp commands to replicate sweat and intensive workout exercise."
-              </p>
-              <div className="flex gap-1.5 flex-wrap mt-2">
-                <span className="px-2 py-0.5 bg-white/5 border border-white/10 rounded text-[9px] font-bold uppercase text-slate-300">Style: HYPER-ACTIVE</span>
-                <span className="px-2 py-0.5 bg-white/5 border border-white/10 rounded text-[9px] font-bold uppercase text-slate-300">Vibe: MULTI-LEVEL DUP</span>
-              </div>
-            </div>
-          </div>
-
-          <div className="md:col-span-3 flex flex-col justify-center items-center gap-3">
-            <div className="w-20 h-20 rounded-full border-4 border-[#FF4D00] flex items-center justify-center relative shadow-lg shadow-[#FF4D00]/15 bg-[#1E293B]/60">
-              <svg width="32" height="32" fill="#FF4D00" viewBox="0 0 24 24" className="animate-pulse">
-                <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z" />
-                <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z" />
-              </svg>
-              <div className="absolute -bottom-2.5 bg-[#FF4D00] px-2 py-0.5 rounded text-[8px] font-bold text-white uppercase tracking-wider">REC AUTO</div>
-            </div>
-            
-            <button 
-              onClick={handleProcessVideo}
-              disabled={isProcessingVideo || !videoUrl}
-              className="w-full py-2.5 bg-white hover:bg-orange-50 text-black rounded-lg font-black uppercase text-xs shadow-lg duration-200 cursor-pointer"
-            >
-              Render Vibe
-            </button>
-          </div>
-        </footer>
 
         {/* Settings Modal */}
         {isSettingsOpen && (
